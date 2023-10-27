@@ -114,11 +114,9 @@ function orthographic() {
   var increase = 7000;
   right = near * Math.tan(fovy / 2) * aspect * increase;
   left = -right;
-  console.log(right);
 
   test = near * Math.tan(fovy / 2) * increase;
   bottom = -test;
-  console.log(test);
 
   var pOrthographic = mat4(
     2 / (right - left),
