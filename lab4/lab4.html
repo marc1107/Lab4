@@ -46,6 +46,7 @@
 				Rs.g = ks.g * Is_pp0.g * shine * costhetag0;
 				Rs.b = ks.b * Is_pp0.b * shine * costhetag0;
 
+				// Final reflection: sum of ambient, diffuse, and specular
 				R = clamp( Ra + Rd + Rs, 0.0, 1.0);
 				gl_Position =  projectionMatrix * modelViewMatrix * vertexPosition;
 			}
@@ -54,8 +55,9 @@
     <script id="fragment-shader" type="x-shader/x-fragment">
 
       precision mediump float;
+			varying vec3 R;
       void main() {
-          gl_FragColor = vec4( .8, .8, .8, 1.0 );
+          gl_FragColor = vec4( R.r, R.g, R.b, 1.0 );
       }
     </script>
 
