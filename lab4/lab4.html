@@ -4,27 +4,43 @@
     <script id="vertex-shader" type="x-shader/x-vertex">
       precision mediump float;
       attribute vec4 vertexPosition;
-      attribute vec3 nv;
-      uniform vec3 p0;
-      uniform vec3 Ia, Id, Is;
-      uniform vec3 ka, kd, ks;
-      uniform float alpha;
-      vec3 Ia_pp0, Id_pp0, Is_pp0;
-      vec3 i, v;
-      varying vec3 R;
       uniform mat4 modelViewMatrix;
       uniform mat4 projectionMatrix;
 
+      attribute vec3 nv; // normal vector
+
+      // uniforms:
+      // point light source location
+      uniform vec3 p0;
+      // incident light components
+      uniform vec3 Ia, Id, Is;
+      // coefficients of object
+      uniform vec3 ka, kd, ks;
+      // shininess for specular light
+      uniform float alpha;
+
+      // attenuated incident light components
+      vec3 Ia_pp0, Id_pp0, Is_pp0;
+      // unit vectors for source direction and view
+      vec3 i, v;
+      // reflection light 
+      // (interpolated in fragment shader)
+      varying vec3 R;
+      
+      
       void main() {
       	gl_PointSize = 1.0;
+        // Compute point light source attenuated
       	float distance = length(vertexPosition.xyz - p0);
 
+        // Ambient, diffuse, and specular light attenuated
       	Ia_pp0 = Ia / (distance * distance);
       	Id_pp0 = Id / (distance * distance);
       	Is_pp0 = Is / (distance * distance);
 
-      	vec3 Ra, Rd, Rs;
+      	vec3 Ra, Rd, Rs;  // reflection light components
 
+        // Ambient Reflection
       	Ra.r = ka.r * Ia_pp0.r;
       	Ra.g = ka.g * Ia_pp0.g;
       	Ra.b = ka.b * Ia_pp0.b;
@@ -48,7 +64,8 @@
 
       	// Final reflection: sum of ambient, diffuse, and specular
       	R = clamp( Ra + Rd + Rs, 0.0, 1.0);
-      	gl_Position =  projectionMatrix * modelViewMatrix * vertexPosition;
+        
+      	gl_Position =  projectionMatrix * modelViewMatrix *vertexPosition;
       }
     </script>
 
@@ -57,7 +74,8 @@
          precision mediump float;
       varying vec3 R;
          void main() {
-      	gl_FragColor = vec4( R.r, R.g, R.b, 1.0 );
+          gl_FragColor = vec4( R.r, R.g, R.b, 1.0 );
+        
          }
     </script>
 

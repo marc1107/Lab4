@@ -6,6 +6,7 @@ var numTriangles;
 var near, far;
 var aspect, fovy, left, right, bottom, test;
 var projectionMatrix;
+var R;
 
 function initGL() {
   var canvas = document.getElementById("gl-canvas");
@@ -104,8 +105,33 @@ function initGL() {
 
   projectionMatrix = gl.getUniformLocation(myShaderProgram, "projectionMatrix");
 
-  //perspective();
-  orthographic();
+  var p0Location = gl.getUniformLocation(myShaderProgram, "p0");
+  gl.uniform3f(p0Location,1.0, 2.0, 3.0);
+  
+  var IaLocation = gl.getUniformLocation(myShaderProgram, "Ia");
+  gl.uniform3f(IaLocation, 1.0, 2.0, 3.0);
+
+  var IdLocation = gl.getUniformLocation(myShaderProgram, "Id");
+  gl.uniform3f(IdLocation, 1.0, 2.0, 3.0);
+
+  var IsLocation = gl.getUniformLocation(myShaderProgram, "Is");
+  gl.uniform3f(IsLocation, 1.0, 2.0, 3.0);
+
+  var kaLocation = gl.getUniformLocation(myShaderProgram, "ka");
+  gl.uniform3f(kaLocation, 1.0, 2.0, 3.0);
+
+  var kdLocation = gl.getUniformLocation(myShaderProgram, "kd");
+  gl.uniform3f(kdLocation, 1.0, 2.0, 3.0);
+
+  var ksLocation = gl.getUniformLocation(myShaderProgram, "ks");
+  gl.uniform3f(ksLocation, 1.0, 2.0, 3.0);
+
+  var alphaLocation = gl.getUniformLocation(myShaderProgram, "alpha");
+  gl.uniform1f(alphaLocation, 1.0);
+
+
+  perspective();
+  // orthographic();
 
   //drawObject();
 }
@@ -171,7 +197,9 @@ function perspective() {
   drawObject();
 }
 
-function light1() {}
+function light1() {
+  
+  }
 
 function light2() {}
 
