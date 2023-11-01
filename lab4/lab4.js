@@ -208,7 +208,7 @@ function perspective() {
 function light1() {
   isLight1On = 1 - isLight1On;
 
-  var p0 = vec3(1.0, 2.0, 3.0); // Point light position
+  var p0 = vec3(1.0, 0.8, 1.6); // Point light position
   var Ia = vec3(0.2 * isLight1On, 0.2 * isLight1On, 0.2 * isLight1On); // Ambient light intensity
   var Id = vec3(1.0 * isLight1On, 1.0 * isLight1On, 1.0 * isLight1On); // Diffuse light intensity
   var Is = vec3(1.0 * isLight1On, 1.0 * isLight1On, 1.0 * isLight1On);
