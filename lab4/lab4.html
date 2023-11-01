@@ -9,6 +9,9 @@
 
       attribute vec3 nv; // normal vector
 
+			// uniform for controlling specular reflection
+  		uniform float specularOn;
+
       // uniforms for the first light (spotlight)
       uniform vec3 p0;
       uniform vec3 Ia, Id, Is;
@@ -71,9 +74,14 @@
       	float cosphi1 = dot(r1,v1);
       	float shine1 = pow(max(cosphi1, 0.0), alpha1);
 				float costhetag1 = floor(0.5 * (sign(costheta1) + 1.0));
-        Rs1.r = ks1.r * Is_pp1.r * shine1 * costhetag1;
-        Rs1.g = ks1.g * Is_pp1.g * shine1 * costhetag1;
-        Rs1.b = ks1.b * Is_pp1.b * shine1 * costhetag1;
+				
+				if (specularOn == 1.0) {
+					Rs1.r = ks1.r * Is_pp1.r * shine1 * costhetag1;
+					Rs1.g = ks1.g * Is_pp1.g * shine1 * costhetag1;
+					Rs1.b = ks1.b * Is_pp1.b * shine1 * costhetag1;
+				} else {
+					Rs1 = vec3(0.0, 0.0, 0.0);
+				}
 
 				// If the angle is less than the cutoff angle, the vertex is lit by the spotlight
       	if (angle < cutoffAngle) {
@@ -102,9 +110,17 @@
       		float cosphi = dot(r,v);
       		float shine = pow(max(cosphi, 0.0), alpha);
       		float costhetag0 = floor(0.5 * (sign(costheta) + 1.0));
-      		Rs.r = ks.r * Is_pp0.r * shine * costhetag0;
-      		Rs.g = ks.g * Is_pp0.g * shine * costhetag0;
-      		Rs.b = ks.b * Is_pp0.b * shine * costhetag0;
+      		
+					if (specularOn == 1.0) {
+						// Compute specular reflection as before
+						// For the first light
+						Rs.r = ks.r * Is_pp0.r * shine * costhetag0;
+						Rs.g = ks.g * Is_pp0.g * shine * costhetag0;
+						Rs.b = ks.b * Is_pp0.b * shine * costhetag0;
+					} else {
+						// Set specular reflection to 0
+						Rs = vec3(0.0, 0.0, 0.0);
+					}
 
       		// Final reflection: sum of ambient, diffuse, and specular
       		R = clamp( Ra + Rd + Rs + Ra1 + Rd1 + Rs1, 0.0, 1.0);

@@ -10,9 +10,9 @@ var R;
 var indexLis;
 var myShaderProgram;
 var isLight1On, isLight2On;
+var specularOn;
 var vertexNormals;
 var faceNormals;
-
 
 function initGL() {
   var canvas = document.getElementById("gl-canvas");
@@ -105,6 +105,7 @@ function initGL() {
 
   isLight1On = 0;
   isLight2On = 0;
+  specularOn = 0;
 
   var modelViewMatrix = gl.getUniformLocation(
     myShaderProgram,
@@ -134,7 +135,6 @@ function initGL() {
   var nvPosition = gl.getAttribLocation(myShaderProgram, "nv");
   gl.vertexAttribPointer(nvPosition, 3, gl.FLOAT, false, 0, 0);
   gl.enableVertexAttribArray(nvPosition);
-
 
   perspective();
   light1();
@@ -299,11 +299,17 @@ function light2() {
   );
   gl.uniform1f(cutoffAngleLocation, Math.PI / 2); // The cutoff angle is 45 degrees
 
-
   drawObject();
 }
 
-function specular() {}
+function specular() {
+  specularOn = 1 - specularOn;
+
+  var specularOnLoc = gl.getUniformLocation(myShaderProgram, "specularOn");
+  gl.uniform1f(specularOnLoc, specularOn);
+
+  drawObject();
+}
 
 function drawObject() {
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
