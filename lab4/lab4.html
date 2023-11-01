@@ -19,64 +19,77 @@
       // shininess for specular light
       uniform float alpha;
 
+      uniform vec3 lightDirection; // The direction in which the light is shining
+      uniform float cutoffAngle; // The cutoff angle for the spotlight in radians
+
       // attenuated incident light components
       vec3 Ia_pp0, Id_pp0, Is_pp0;
       // unit vectors for source direction and view
       vec3 i, v;
-      // reflection light 
+      // reflection light
       // (interpolated in fragment shader)
       varying vec3 R;
-      
-      
+
+
       void main() {
       	gl_PointSize = 1.0;
-        // Compute point light source attenuated
+      	// Compute point light source attenuated
       	float distance = length(vertexPosition.xyz - p0);
 
-        // Ambient, diffuse, and specular light attenuated
-      	Ia_pp0 = Ia / (distance * distance);
-      	Id_pp0 = Id / (distance * distance);
-      	Is_pp0 = Is / (distance * distance);
+      	// Compute the direction from the vertex to the light source
+      	vec3 directionToLightSource = normalize(p0 - vertexPosition.xyz);
 
-      	vec3 Ra, Rd, Rs;  // reflection light components
+      	// Compute the angle between the direction to the light source and the light direction
+      	float angle = acos(dot(directionToLightSource, lightDirection));
 
-        // Ambient Reflection
-      	Ra.r = ka.r * Ia_pp0.r;
-      	Ra.g = ka.g * Ia_pp0.g;
-      	Ra.b = ka.b * Ia_pp0.b;
+      	// If the angle is less than the cutoff angle, the vertex is lit by the spotlight
+      	if (angle < cutoffAngle) {
+      		// Ambient, diffuse, and specular light attenuated
+      		Ia_pp0 = Ia / (distance * distance);
+      		Id_pp0 = Id / (distance * distance);
+      		Is_pp0 = Is / (distance * distance);
 
-      	// Diffuse Reflection
-      	i = normalize(p0 - vertexPosition.xyz);
-      	float costheta = dot(i,nv);
-      	Rd.r = kd.r * Id_pp0.r * max(costheta, 0.0);
-      	Rd.g = kd.g * Id_pp0.g * max(costheta, 0.0);
-      	Rd.b = kd.b * Id_pp0.b * max(costheta, 0.0);
+      		vec3 Ra, Rd, Rs;  // reflection light components
 
-      	// Specular Reflection
-      	vec3 r = normalize(2.0 * nv * costheta - i);
-      	v = normalize(vec3(0.0, 0.0, 0.0) - vertexPosition.xyz);
-      	float cosphi = dot(r,v);
-      	float shine = pow(max(cosphi, 0.0), alpha);
-         	float costhetag0 = floor(0.5 * (sign(costheta)+1.0));
-      	Rs.r = ks.r * Is_pp0.r * shine * costhetag0;
-      	Rs.g = ks.g * Is_pp0.g * shine * costhetag0;
-      	Rs.b = ks.b * Is_pp0.b * shine * costhetag0;
+      		// Ambient Reflection
+      		Ra.r = ka.r * Ia_pp0.r;
+      		Ra.g = ka.g * Ia_pp0.g;
+      		Ra.b = ka.b * Ia_pp0.b;
 
-      	// Final reflection: sum of ambient, diffuse, and specular
-      	R = clamp( Ra + Rd + Rs, 0.0, 1.0);
-        
-      	gl_Position =  projectionMatrix * modelViewMatrix *vertexPosition;
+      		// Diffuse Reflection
+      		i = normalize(p0 - vertexPosition.xyz);
+      		float costheta = dot(i,nv);
+      		Rd.r = kd.r * Id_pp0.r * max(costheta, 0.0);
+      		Rd.g = kd.g * Id_pp0.g * max(costheta, 0.0);
+      		Rd.b = kd.b * Id_pp0.b * max(costheta, 0.0);
+
+      		// Specular Reflection
+      		vec3 r = normalize(2.0 * nv * costheta - i);
+      		v = normalize(vec3(0.0, 0.0, 0.0) - vertexPosition.xyz);
+      		float cosphi = dot(r,v);
+      		float shine = pow(max(cosphi, 0.0), alpha);
+      		float costhetag0 = floor(0.5 * (sign(costheta)+1.0));
+      		Rs.r = ks.r * Is_pp0.r * shine * costhetag0;
+      		Rs.g = ks.g * Is_pp0.g * shine * costhetag0;
+      		Rs.b = ks.b * Is_pp0.b * shine * costhetag0;
+
+      		// Final reflection: sum of ambient, diffuse, and specular
+      		R = clamp( Ra + Rd + Rs, 0.0, 1.0);
+      	} else {
+      		// The vertex is not lit by the spotlight, so set the reflection to black
+      		R = vec3(0.0, 0.0, 0.0);
+      	}
+
+      	gl_Position =  projectionMatrix * modelViewMatrix * vertexPosition;
       }
     </script>
 
     <script id="fragment-shader" type="x-shader/x-fragment">
-
-         precision mediump float;
+      precision mediump float;
       varying vec3 R;
-         void main() {
-          gl_FragColor = vec4( R.r, R.g, R.b, 1.0 );
-        
-         }
+      void main() {
+      	gl_FragColor = vec4( R.r, R.g, R.b, 1.0 );
+      }
     </script>
 
     <script type="text/javascript" src="../Common/webgl-utils.js"></script>

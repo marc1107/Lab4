@@ -7,6 +7,7 @@ var near, far;
 var aspect, fovy, left, right, bottom, test;
 var projectionMatrix;
 var R;
+var indexLis;
 var myShaderProgram;
 
 function initGL() {
@@ -106,12 +107,11 @@ function initGL() {
 
   projectionMatrix = gl.getUniformLocation(myShaderProgram, "projectionMatrix");
 
-  // R = vec3(.8, .8, 0.8);
+  // R = vec3(0.8, 0.8, 0.8);
   // var Rloc = gl.getUniformLocation(myShaderProgram, "R");
   // gl.uniform3fv(Rloc, R);
 
-
-  var p0 = vec3(1.0, 0.0, 0.0);
+  var p0 = vec3(0.0, 0.0, -2.0);
   var Ia = vec3(1.0, 1.0, 1.0);
   var Id = vec3(1.0, 1.0, 1.0);
   var Is = vec3(1.0, 1.0, 1.0);
@@ -138,7 +138,7 @@ function initGL() {
   // send the material properties to the shader
   var kaloc = gl.getUniformLocation(myShaderProgram, "ka");
   gl.uniform3fv(kaloc, flatten(ka));
-  
+
   var kdloc = gl.getUniformLocation(myShaderProgram, "kd");
   gl.uniform3fv(kdloc, flatten(kd));
 
@@ -148,6 +148,38 @@ function initGL() {
   var alphaloc = gl.getUniformLocation(myShaderProgram, "alpha");
   gl.uniform1f(alphaloc, alpha);
 
+  var lightDirectionLocation = gl.getUniformLocation(
+    myShaderProgram,
+    "lightDirection"
+  );
+  gl.uniform3fv(lightDirectionLocation, [0.0, 0.0, -1.0]); // The light is shining downwards
+
+  var cutoffAngleLocation = gl.getUniformLocation(
+    myShaderProgram,
+    "cutoffAngle"
+  );
+  gl.uniform1f(cutoffAngleLocation, Math.PI / 4); // The cutoff angle is 45 degrees
+
+  var faceNormals = getFaceNormals(vertices, indexLis, numTriangles);
+
+  // Calculate vertex normals
+  var vertexNormals = getVertexNormals(
+    vertices,
+    indexLis,
+    faceNormals,
+    numVertices,
+    numTriangles
+  );
+
+  // Create and bind a buffer for the vertex normals
+  var normalBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, flatten(vertexNormals), gl.STATIC_DRAW);
+
+  // Get the attribute location for normal vectors and enable it
+  var nvPosition = gl.getAttribLocation(myShaderProgram, "nv");
+  gl.vertexAttribPointer(nvPosition, 3, gl.FLOAT, false, 0, 0);
+  gl.enableVertexAttribArray(nvPosition);
 
   perspective();
   // light1();
@@ -218,103 +250,8 @@ function perspective() {
 }
 
 function light1() {
-
-  // point light
-  var p0 = vec3(1.0, 2.0, 3.0);
-  var Ia = vec3(1.0, 1.0, 1.0);
-  var Id = vec3(1.0, 1.0, 1.0);
-  var Is = vec3(1.0, 1.0, 1.0);
-
-  var ka = vec3(0.9, 0.2, 0.2);
-  var kd = vec3(0.9, 0.2, 0.2);
-  var ks = vec3(1.0, 1.0, 1.0);
-  var alpha = 5.0;
-
-  var vertexPosition = vertices; // replace with actual vertex position
-  // calculate the facenormalvectors 
-  var fnv = getFaceNormals( vertices, indexList, numTriangles ); // replace with actual face normal vector
-
-  var nv = getVertexNormals(vertices, indexList, fnv, numVertices, numTriangles); // replace with actual normal vector
-
-  vp = vec3(vertexPosition[0], vertexPosition[1], vertexPosition[2]);
-  
-  var distance = length(subtract(vp,p0));
-
-  Ia_pp0 = Ia.map(component => component / (distance * distance));
-  Id_pp0 = Id.map(component => component / (distance * distance));
-  Is_pp0 = Is.map(component => component / (distance * distance));
-  
-
-  var Ra = {};  // reflection light components
-  var Rd = {};
-  var Rs = {}; 
-
-        // Ambient Reflection
-  Ra.r = ka[0] * Ia_pp0[0];
-  Ra.g = ka[1] * Ia_pp0[0];
-  Ra.b = ka[2] * Ia_pp0[0];
-
-      	// Diffuse Reflection
- // Diffuse Reflection
-var i = normalize(subtract(p0, vp));
-var costheta = nv.map(function(nvVector) {
-  return dot(i, nvVector);
-});
-
-// Calculate Rd for each normal vector
-var Rd = costheta.map(function(costhetaValue, index) {
-  return {
-    r: kd[0] * Id_pp0[0] * Math.max(costhetaValue, 0.0),
-    g: kd[1] * Id_pp0[1] * Math.max(costhetaValue, 0.0),
-    b: kd[2] * Id_pp0[2] * Math.max(costhetaValue, 0.0)
-  };
-});
-
-// Specular Reflection
-var r = costheta.map(function(costhetaValue, index) {
-  return normalize(2.0 * nv[index] * costhetaValue - i);
-});
-var v = normalize(vec3(0.0, 0.0, 0.0) - vp);
-var cosphi = r.map(function(rVector) {
-  return dot(rVector, v);
-});
-
-// Calculate Rs for each normal vector
-var Rs = cosphi.map(function(cosphiValue, index) {
-  var shine = Math.pow(Math.max(cosphiValue, 0.0), alpha);
-  var costhetag0 = Math.floor(0.5 * (Math.sign(costheta[index]) + 1.0));
-  return {
-    r: ks[0] * Is_pp0[0] * shine * costhetag0,
-    g: ks[1] * Is_pp0[1] * shine * costhetag0,
-    b: ks[2] * Is_pp0[2] * shine * costhetag0
-  };
-});
-
-// Final reflection: sum of ambient, diffuse, and specular
-// Calculate R for each normal vector
-
-function clamp(value, min, max) {
-  return Math.min(Math.max(value, min), max);
+  drawObject();
 }
-var R = Rd.map(function(RdValue, index) {
-  return {
-    r: clamp(Ra.r + RdValue.r + Rs[index].r, 0.0, 1.0),
-    g: clamp(Ra.g + RdValue.g + Rs[index].g, 0.0, 1.0),
-    b: clamp(Ra.b + RdValue.b + Rs[index].b, 0.0, 1.0)
-  };
-});
-
-// Send R to the shader
-// You need to send each R value to the shader, not just the first one
-R.forEach(function(RValue) {
-  var Rloc = gl.getUniformLocation(myShaderProgram, "R");
-  gl.uniform3fv(Rloc, [RValue.r, RValue.g, RValue.b]);
-});
-
-drawObject();
-}
-
-  
 
 function light2() {}
 
@@ -325,7 +262,7 @@ function drawObject() {
   gl.drawElements(gl.TRIANGLES, 3 * numTriangles, gl.UNSIGNED_SHORT, 0);
 }
 
-function getFaceNormals( vertices, indexList, numTriangles ) {
+function getFaceNormals(vertices, indexList, numTriangles) {
   var faceNormals = [];
 
   for (var i = 0; i < numTriangles; i++) {
@@ -358,19 +295,29 @@ function getFaceNormals( vertices, indexList, numTriangles ) {
 //     vertexNormal = normalize(vertexNormal);
 //     vertexNormals.push(vertexNormal);
 //   }
-  
+
 //   return vertexNormals;
-  
+
 // }
 
-function getVertexNormals(vertices, indexList, faceNormals, numVertices, numTriangles) {
+function getVertexNormals(
+  vertices,
+  indexList,
+  faceNormals,
+  numVertices,
+  numTriangles
+) {
   var vertexNormals = [];
 
   for (var j = 0; j < numVertices; j++) {
-    var vertexNormal = vec3(0.0, 0.0, 0.0);  // Initialize to zero vector
+    var vertexNormal = vec3(0.0, 0.0, 0.0); // Initialize to zero vector
     for (var i = 0; i < numTriangles; i++) {
-      if (indexList[3 * i] == j || indexList[3 * i + 1] == j || indexList[3 * i + 2] == j) {
-        vertexNormal = add(vertexNormal, faceNormals[i]);  // Use vector addition
+      if (
+        indexList[3 * i] == j ||
+        indexList[3 * i + 1] == j ||
+        indexList[3 * i + 2] == j
+      ) {
+        vertexNormal = add(vertexNormal, faceNormals[i]); // Use vector addition
       }
     }
     vertexNormal = normalize(vertexNormal);
@@ -379,4 +326,3 @@ function getVertexNormals(vertices, indexList, faceNormals, numVertices, numTria
 
   return vertexNormals;
 }
-
