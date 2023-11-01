@@ -13,6 +13,7 @@ var isLight1On, isLight2On;
 var specularOn;
 var vertexNormals;
 var faceNormals;
+var alpha;
 
 function initGL() {
   var canvas = document.getElementById("gl-canvas");
@@ -107,6 +108,8 @@ function initGL() {
   isLight2On = 0;
   specularOn = 0;
 
+  alpha = 1;
+
   var modelViewMatrix = gl.getUniformLocation(
     myShaderProgram,
     "modelViewMatrix"
@@ -135,6 +138,9 @@ function initGL() {
   var nvPosition = gl.getAttribLocation(myShaderProgram, "nv");
   gl.vertexAttribPointer(nvPosition, 3, gl.FLOAT, false, 0, 0);
   gl.enableVertexAttribArray(nvPosition);
+
+  var alphaloc = gl.getUniformLocation(myShaderProgram, "alpha");
+  gl.uniform1f(alphaloc, alpha);
 
   perspective();
   light1();
@@ -208,7 +214,7 @@ function perspective() {
 function light1() {
   isLight1On = 1 - isLight1On;
 
-  var p0 = vec3(1.0, 0.8, 1.6); // Point light position
+  var p0 = vec3(1.2, 0.8, 1.9); // Point light position
   var Ia = vec3(0.2 * isLight1On, 0.2 * isLight1On, 0.2 * isLight1On); // Ambient light intensity
   var Id = vec3(1.0 * isLight1On, 1.0 * isLight1On, 1.0 * isLight1On); // Diffuse light intensity
   var Is = vec3(1.0 * isLight1On, 1.0 * isLight1On, 1.0 * isLight1On);
@@ -216,7 +222,6 @@ function light1() {
   var ka = vec3(0.9, 0.2, 0.2);
   var kd = vec3(0.9, 0.2, 0.2);
   var ks = vec3(1.0, 1.0, 1.0);
-  var alpha = 5.0;
 
   var p0loc = gl.getUniformLocation(myShaderProgram, "p1");
   gl.uniform3fv(p0loc, flatten(p0));
@@ -241,9 +246,6 @@ function light1() {
   var ksloc = gl.getUniformLocation(myShaderProgram, "ks1");
   gl.uniform3fv(ksloc, flatten(ks));
 
-  var alphaloc = gl.getUniformLocation(myShaderProgram, "alpha1");
-  gl.uniform1f(alphaloc, alpha);
-
   drawObject();
 }
 
@@ -258,7 +260,7 @@ function light2() {
   var ka = vec3(0.9, 0.2, 0.2);
   var kd = vec3(0.9, 0.2, 0.2);
   var ks = vec3(1.0, 1.0, 1.0);
-  var alpha = 5.0;
+  var alpha = 0.05;
 
   // send the light source position to the shader
   var p0loc = gl.getUniformLocation(myShaderProgram, "p0");
@@ -283,9 +285,6 @@ function light2() {
 
   var ksloc = gl.getUniformLocation(myShaderProgram, "ks");
   gl.uniform3fv(ksloc, flatten(ks));
-
-  var alphaloc = gl.getUniformLocation(myShaderProgram, "alpha");
-  gl.uniform1f(alphaloc, alpha);
 
   var lightDirectionLocation = gl.getUniformLocation(
     myShaderProgram,

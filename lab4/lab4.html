@@ -24,7 +24,6 @@
       uniform vec3 p1; // position of the second light
       uniform vec3 Ia1, Id1, Is1; // incident light components for the second light
       uniform vec3 ka1, kd1, ks1; // coefficients of object for the second light
-      uniform float alpha1; // shininess for specular light for the second light
 
       // attenuated incident light components
       vec3 Ia_pp0, Id_pp0, Is_pp0;
@@ -72,7 +71,7 @@
         vec3 r1 = normalize(2.0 * nv * costheta1 - i1);
         v1 = normalize(vec3(0.0, 0.0, 0.0) - vertexPosition.xyz);
       	float cosphi1 = dot(r1,v1);
-      	float shine1 = pow(max(cosphi1, 0.0), alpha1);
+      	float shine1 = pow(max(cosphi1, 0.0), alpha);
 				float costhetag1 = floor(0.5 * (sign(costheta1) + 1.0));
 				
 				if (specularOn == 1.0) {
