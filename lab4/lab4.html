@@ -9,23 +9,25 @@
 
       attribute vec3 nv; // normal vector
 
-      // uniforms:
-      // point light source location
+      // uniforms for the first light (spotlight)
       uniform vec3 p0;
-      // incident light components
       uniform vec3 Ia, Id, Is;
-      // coefficients of object
       uniform vec3 ka, kd, ks;
-      // shininess for specular light
       uniform float alpha;
+      uniform vec3 lightDirection;
+      uniform float cutoffAngle;
 
-      uniform vec3 lightDirection; // The direction in which the light is shining
-      uniform float cutoffAngle; // The cutoff angle for the spotlight in radians
+      // uniforms for the second light (point light)
+      uniform vec3 p1; // position of the second light
+      uniform vec3 Ia1, Id1, Is1; // incident light components for the second light
+      uniform vec3 ka1, kd1, ks1; // coefficients of object for the second light
+      uniform float alpha1; // shininess for specular light for the second light
 
       // attenuated incident light components
       vec3 Ia_pp0, Id_pp0, Is_pp0;
+      vec3 Ia_pp1, Id_pp1, Is_pp1; // for the second light
       // unit vectors for source direction and view
-      vec3 i, v;
+      vec3 i, v, i1, v1;
       // reflection light
       // (interpolated in fragment shader)
       varying vec3 R;
@@ -35,14 +37,45 @@
       	gl_PointSize = 1.0;
       	// Compute point light source attenuated
       	float distance = length(vertexPosition.xyz - p0);
+        float distance1 = length(vertexPosition.xyz - p1); // for the second light
 
       	// Compute the direction from the vertex to the light source
       	vec3 directionToLightSource = normalize(p0 - vertexPosition.xyz);
+        vec3 directionToLightSource1 = normalize(p1 - vertexPosition.xyz); // for the second light
 
       	// Compute the angle between the direction to the light source and the light direction
       	float angle = acos(dot(directionToLightSource, lightDirection));
 
-      	// If the angle is less than the cutoff angle, the vertex is lit by the spotlight
+				// For the point light
+				Ia_pp1 = Ia1 / (distance1 * distance1);
+				Id_pp1 = Id1 / (distance1 * distance1);
+				Is_pp1 = Is1 / (distance1 * distance1);
+				
+				vec3 Ra1, Rd1, Rs1;  // reflection light components for the second light
+
+				// For the second light
+				Ra1.r = ka1.r * Ia_pp1.r;
+				Ra1.g = ka1.g * Ia_pp1.g;
+				Ra1.b = ka1.b * Ia_pp1.b;
+
+				// For the second light
+				i1 = normalize(p1 - vertexPosition.xyz);
+				float costheta1 = dot(i1,nv);
+				Rd1.r = kd1.r * Id_pp1.r * max(costheta1, 0.0);
+				Rd1.g = kd1.g * Id_pp1.g * max(costheta1, 0.0);
+				Rd1.b = kd1.b * Id_pp1.b * max(costheta1, 0.0);
+
+				// For the second light
+        vec3 r1 = normalize(2.0 * nv * costheta1 - i1);
+        v1 = normalize(vec3(0.0, 0.0, 0.0) - vertexPosition.xyz);
+      	float cosphi1 = dot(r1,v1);
+      	float shine1 = pow(max(cosphi1, 0.0), alpha1);
+				float costhetag1 = floor(0.5 * (sign(costheta1) + 1.0));
+        Rs1.r = ks1.r * Is_pp1.r * shine1 * costhetag1;
+        Rs1.g = ks1.g * Is_pp1.g * shine1 * costhetag1;
+        Rs1.b = ks1.b * Is_pp1.b * shine1 * costhetag1;
+
+				// If the angle is less than the cutoff angle, the vertex is lit by the spotlight
       	if (angle < cutoffAngle) {
       		// Ambient, diffuse, and specular light attenuated
       		Ia_pp0 = Ia / (distance * distance);
@@ -68,16 +101,16 @@
       		v = normalize(vec3(0.0, 0.0, 0.0) - vertexPosition.xyz);
       		float cosphi = dot(r,v);
       		float shine = pow(max(cosphi, 0.0), alpha);
-      		float costhetag0 = floor(0.5 * (sign(costheta)+1.0));
+      		float costhetag0 = floor(0.5 * (sign(costheta) + 1.0));
       		Rs.r = ks.r * Is_pp0.r * shine * costhetag0;
       		Rs.g = ks.g * Is_pp0.g * shine * costhetag0;
       		Rs.b = ks.b * Is_pp0.b * shine * costhetag0;
 
       		// Final reflection: sum of ambient, diffuse, and specular
-      		R = clamp( Ra + Rd + Rs, 0.0, 1.0);
+      		R = clamp( Ra + Rd + Rs + Ra1 + Rd1 + Rs1, 0.0, 1.0);
       	} else {
-      		// The vertex is not lit by the spotlight, so set the reflection to black
-      		R = vec3(0.0, 0.0, 0.0);
+      		// just use ligth 1
+      		R = clamp( Ra1 + Rd1 + Rs1, 0.0, 1.0);
       	}
 
       	gl_Position =  projectionMatrix * modelViewMatrix * vertexPosition;

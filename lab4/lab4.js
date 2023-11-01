@@ -9,6 +9,10 @@ var projectionMatrix;
 var R;
 var indexLis;
 var myShaderProgram;
+var isLight1On, isLight2On;
+var vertexNormals;
+var faceNormals;
+
 
 function initGL() {
   var canvas = document.getElementById("gl-canvas");
@@ -99,6 +103,9 @@ function initGL() {
   aspect = canvas.height / canvas.width;
   fovy = (45 * Math.PI) / 180;
 
+  isLight1On = 0;
+  isLight2On = 0;
+
   var modelViewMatrix = gl.getUniformLocation(
     myShaderProgram,
     "modelViewMatrix"
@@ -107,63 +114,10 @@ function initGL() {
 
   projectionMatrix = gl.getUniformLocation(myShaderProgram, "projectionMatrix");
 
-  // R = vec3(0.8, 0.8, 0.8);
-  // var Rloc = gl.getUniformLocation(myShaderProgram, "R");
-  // gl.uniform3fv(Rloc, R);
-
-  var p0 = vec3(0.0, 0.0, -2.0);
-  var Ia = vec3(1.0, 1.0, 1.0);
-  var Id = vec3(1.0, 1.0, 1.0);
-  var Is = vec3(1.0, 1.0, 1.0);
-
-  var ka = vec3(0.9, 0.2, 0.2);
-  var kd = vec3(0.9, 0.2, 0.2);
-  var ks = vec3(1.0, 1.0, 1.0);
-  var alpha = 5.0;
-
-  // send the light source position to the shader
-  var p0loc = gl.getUniformLocation(myShaderProgram, "p0");
-  gl.uniform3fv(p0loc, flatten(p0));
-
-  // send the light source intensity to the shader
-  var Ialoc = gl.getUniformLocation(myShaderProgram, "Ia");
-  gl.uniform3fv(Ialoc, flatten(Ia));
-
-  var Idloc = gl.getUniformLocation(myShaderProgram, "Id");
-  gl.uniform3fv(Idloc, flatten(Id));
-
-  var Isloc = gl.getUniformLocation(myShaderProgram, "Is");
-  gl.uniform3fv(Isloc, flatten(Is));
-
-  // send the material properties to the shader
-  var kaloc = gl.getUniformLocation(myShaderProgram, "ka");
-  gl.uniform3fv(kaloc, flatten(ka));
-
-  var kdloc = gl.getUniformLocation(myShaderProgram, "kd");
-  gl.uniform3fv(kdloc, flatten(kd));
-
-  var ksloc = gl.getUniformLocation(myShaderProgram, "ks");
-  gl.uniform3fv(ksloc, flatten(ks));
-
-  var alphaloc = gl.getUniformLocation(myShaderProgram, "alpha");
-  gl.uniform1f(alphaloc, alpha);
-
-  var lightDirectionLocation = gl.getUniformLocation(
-    myShaderProgram,
-    "lightDirection"
-  );
-  gl.uniform3fv(lightDirectionLocation, [0.0, 0.0, -1.0]); // The light is shining downwards
-
-  var cutoffAngleLocation = gl.getUniformLocation(
-    myShaderProgram,
-    "cutoffAngle"
-  );
-  gl.uniform1f(cutoffAngleLocation, Math.PI / 4); // The cutoff angle is 45 degrees
-
-  var faceNormals = getFaceNormals(vertices, indexLis, numTriangles);
+  faceNormals = getFaceNormals(vertices, indexLis, numTriangles);
 
   // Calculate vertex normals
-  var vertexNormals = getVertexNormals(
+  vertexNormals = getVertexNormals(
     vertices,
     indexLis,
     faceNormals,
@@ -181,8 +135,10 @@ function initGL() {
   gl.vertexAttribPointer(nvPosition, 3, gl.FLOAT, false, 0, 0);
   gl.enableVertexAttribArray(nvPosition);
 
+
   perspective();
-  // light1();
+  light1();
+  light2();
   // orthographic();
 
   //drawObject();
@@ -250,10 +206,102 @@ function perspective() {
 }
 
 function light1() {
+  isLight1On = 1 - isLight1On;
+
+  var p0 = vec3(1.0, 2.0, 3.0); // Point light position
+  var Ia = vec3(0.2 * isLight1On, 0.2 * isLight1On, 0.2 * isLight1On); // Ambient light intensity
+  var Id = vec3(1.0 * isLight1On, 1.0 * isLight1On, 1.0 * isLight1On); // Diffuse light intensity
+  var Is = vec3(1.0 * isLight1On, 1.0 * isLight1On, 1.0 * isLight1On);
+
+  var ka = vec3(0.9, 0.2, 0.2);
+  var kd = vec3(0.9, 0.2, 0.2);
+  var ks = vec3(1.0, 1.0, 1.0);
+  var alpha = 5.0;
+
+  var p0loc = gl.getUniformLocation(myShaderProgram, "p1");
+  gl.uniform3fv(p0loc, flatten(p0));
+
+  // send the light source intensity to the shader
+  var Ialoc = gl.getUniformLocation(myShaderProgram, "Ia1");
+  gl.uniform3fv(Ialoc, flatten(Ia));
+
+  var Idloc = gl.getUniformLocation(myShaderProgram, "Id1");
+  gl.uniform3fv(Idloc, flatten(Id));
+
+  var Isloc = gl.getUniformLocation(myShaderProgram, "Is1");
+  gl.uniform3fv(Isloc, flatten(Is));
+
+  // send the material properties to the shader
+  var kaloc = gl.getUniformLocation(myShaderProgram, "ka1");
+  gl.uniform3fv(kaloc, flatten(ka));
+
+  var kdloc = gl.getUniformLocation(myShaderProgram, "kd1");
+  gl.uniform3fv(kdloc, flatten(kd));
+
+  var ksloc = gl.getUniformLocation(myShaderProgram, "ks1");
+  gl.uniform3fv(ksloc, flatten(ks));
+
+  var alphaloc = gl.getUniformLocation(myShaderProgram, "alpha1");
+  gl.uniform1f(alphaloc, alpha);
+
   drawObject();
 }
 
-function light2() {}
+function light2() {
+  isLight2On = 1 - isLight2On;
+
+  var p0 = vec3(1.5, 0.0, -1.5);
+  var Ia = vec3(1.0 * isLight2On, 1.0 * isLight2On, 1.0 * isLight2On);
+  var Id = vec3(1.0 * isLight2On, 1.0 * isLight2On, 1.0 * isLight2On);
+  var Is = vec3(1.0 * isLight2On, 1.0 * isLight2On, 1.0 * isLight2On);
+
+  var ka = vec3(0.9, 0.2, 0.2);
+  var kd = vec3(0.9, 0.2, 0.2);
+  var ks = vec3(1.0, 1.0, 1.0);
+  var alpha = 5.0;
+
+  // send the light source position to the shader
+  var p0loc = gl.getUniformLocation(myShaderProgram, "p0");
+  gl.uniform3fv(p0loc, flatten(p0));
+
+  // send the light source intensity to the shader
+  var Ialoc = gl.getUniformLocation(myShaderProgram, "Ia");
+  gl.uniform3fv(Ialoc, flatten(Ia));
+
+  var Idloc = gl.getUniformLocation(myShaderProgram, "Id");
+  gl.uniform3fv(Idloc, flatten(Id));
+
+  var Isloc = gl.getUniformLocation(myShaderProgram, "Is");
+  gl.uniform3fv(Isloc, flatten(Is));
+
+  // send the material properties to the shader
+  var kaloc = gl.getUniformLocation(myShaderProgram, "ka");
+  gl.uniform3fv(kaloc, flatten(ka));
+
+  var kdloc = gl.getUniformLocation(myShaderProgram, "kd");
+  gl.uniform3fv(kdloc, flatten(kd));
+
+  var ksloc = gl.getUniformLocation(myShaderProgram, "ks");
+  gl.uniform3fv(ksloc, flatten(ks));
+
+  var alphaloc = gl.getUniformLocation(myShaderProgram, "alpha");
+  gl.uniform1f(alphaloc, alpha);
+
+  var lightDirectionLocation = gl.getUniformLocation(
+    myShaderProgram,
+    "lightDirection"
+  );
+  gl.uniform3fv(lightDirectionLocation, [0.0, 0.0, -1.0]); // The light is shining downwards
+
+  var cutoffAngleLocation = gl.getUniformLocation(
+    myShaderProgram,
+    "cutoffAngle"
+  );
+  gl.uniform1f(cutoffAngleLocation, Math.PI / 2); // The cutoff angle is 45 degrees
+
+
+  drawObject();
+}
 
 function specular() {}
 
@@ -281,24 +329,6 @@ function getFaceNormals(vertices, indexList, numTriangles) {
 
   return faceNormals;
 }
-
-// function getVertexNormals( vertices, indexList, faceNormals, numVertices, numTriangles ) {
-//   var vertexNormals = [];
-
-//   for (var j = 0; j < numVertices; j++) {
-//     var vertexNormal;
-//     for( var i = 0; i < numTriangles; i++){
-//       if (indexList[3 * i] == j || indexList[3 * i + 1] == j || indexList[3 * i + 2] == j) {
-//         vertexNormal += faceNormals[i];
-//       }
-//     }
-//     vertexNormal = normalize(vertexNormal);
-//     vertexNormals.push(vertexNormal);
-//   }
-
-//   return vertexNormals;
-
-// }
 
 function getVertexNormals(
   vertices,
