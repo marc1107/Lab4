@@ -302,7 +302,7 @@ function light2() {
     myShaderProgram,
     "cutoffAngle"
   );
-  gl.uniform1f(cutoffAngleLocation, Math.PI / 2); // The cutoff angle is 45 degrees
+  gl.uniform1f(cutoffAngleLocation, Math.PI / 2); // The cutoff angle is 90 degrees
 
   drawObject();
 }
