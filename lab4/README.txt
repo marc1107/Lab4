@@ -43,3 +43,5 @@ Instead of calling the getVertices() and getFaces() functions of the object.js, 
 
 We added a screenshot of the GitHub Copilot prompt to the folder.
 The name of it is copilot.png.
+
+When opening the HTML file in a browser, both light are turned on, the initial projection is the perspective projection and specular reflection is turned off.
