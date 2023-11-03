@@ -153,9 +153,7 @@ async function initGL() {
   perspective();
   light1();
   light2();
-  // orthographic();
 
-  //drawObject();
 }
 
 function orthographic() {
@@ -268,7 +266,7 @@ function light2() {
   var ka = vec3(0.9, 0.2, 0.2);
   var kd = vec3(0.9, 0.2, 0.2);
   var ks = vec3(1.0, 1.0, 1.0);
-  var alpha = 0.05;
+ 
 
   // send the light source position to the shader
   var p0loc = gl.getUniformLocation(myShaderProgram, "p0");
