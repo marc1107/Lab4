@@ -7,7 +7,7 @@ var near, far;
 var aspect, fovy, left, right, bottom, test;
 var projectionMatrix;
 var R;
-var indexLis;
+var indexList;
 var myShaderProgram;
 var isLight1On, isLight2On;
 var specularOn;
@@ -15,7 +15,7 @@ var vertexNormals;
 var faceNormals;
 var alpha;
 
-function initGL() {
+async function initGL() {
   var canvas = document.getElementById("gl-canvas");
 
   gl = WebGLUtils.setupWebGL(canvas);
@@ -40,9 +40,17 @@ function initGL() {
   // access to the vertices and faces
   //
 
-  vertices = getVertices(); // currently defined in object.js
-  indexLis = getFaces();
-  t = getFaces();
+  /* vertices = getVertices(); // currently defined in object.js
+  indexList = getFaces();
+  t = getFaces(); */
+
+  // load the object.ply model instead of using the object.js
+  const model = await loadPlyModel("./object.ply");
+
+  vertices = model.vertices;
+  indexList = model.indices;
+  t = model.indices;
+
   numVertices = vertices.length;
   numTriangles = indexList.length / 3;
   // End of block on reading vertices and faces that you should replace
@@ -118,12 +126,12 @@ function initGL() {
 
   projectionMatrix = gl.getUniformLocation(myShaderProgram, "projectionMatrix");
 
-  faceNormals = getFaceNormals(vertices, indexLis, numTriangles);
+  faceNormals = getFaceNormals(vertices, indexList, numTriangles);
 
   // Calculate vertex normals
   vertexNormals = getVertexNormals(
     vertices,
-    indexLis,
+    indexList,
     faceNormals,
     numVertices,
     numTriangles
@@ -360,4 +368,44 @@ function getVertexNormals(
   }
 
   return vertexNormals;
+}
+
+async function loadPlyModel(url) {
+  const response = await fetch(url);
+  const text = await response.text();
+  const lines = text.split("\n");
+  const vertices = [];
+  const indices = [];
+
+  let readingVertices = false;
+  let readingFaces = false;
+  let vertexCount = 0;
+  let faceCount = 0;
+
+  for (const line of lines) {
+    if (line.startsWith("element vertex")) {
+      vertexCount = Number(line.split(" ")[2]);
+    } else if (line.startsWith("element face")) {
+      faceCount = Number(line.split(" ")[2]);
+    } else if (line.startsWith("end_header")) {
+      readingVertices = true;
+    } else if (readingVertices) {
+      const [x, y, z] = line.split(" ").map(Number);
+      vertices.push(vec4(x, y, z, 1.0));
+      vertexCount--;
+      if (vertexCount === 0) {
+        readingVertices = false;
+        readingFaces = true;
+      }
+    } else if (readingFaces) {
+      const [, ...verts] = line.split(" ").map(Number);
+      indices.push(...verts.slice(0, -1));
+      faceCount--;
+      if (faceCount === 0) {
+        readingFaces = false;
+      }
+    }
+  }
+
+  return { vertices, indices };
 }
